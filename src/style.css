@@ -1,0 +1,22 @@
+h1, p {
+  font-family: Lato;
+}
+
+.peg {
+  border-radius: 50%;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 500%;
+  position: relative;
+  display: inline-block;
+  margin: 1%;
+  }
+
+.big {
+  height: 30px;
+  width: 30px;
+}
+.small {
+  height: 15px;
+  width: 15px;
+}
