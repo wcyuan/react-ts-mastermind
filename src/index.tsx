@@ -201,7 +201,6 @@ class GameUI extends Component {
          num_left={this.state.history[ii][2]} />
       );
     }
-    console.log(this.state.history);
     return (
       <div key={this.state.key}>
       {past_guesses}
