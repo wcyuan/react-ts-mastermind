@@ -132,6 +132,9 @@ class GameUI extends Component {
       secret: game.get_random_guess(),
       history: [],
       auto: new mastermind.AutoPlayer(game),
+      // Set a key to make it easy to reset components
+      // https://stackoverflow.com/a/21750576
+      key: new Date(),
     };
   }
   updateHistory(game, auto, secret, guess, history) {
@@ -158,6 +161,7 @@ class GameUI extends Component {
     this.setState({
       secret: this.state.game.get_random_guess(),
       history: [],
+      key: new Date(),
     });
   }
   newOneMoveGame() {
@@ -179,6 +183,7 @@ class GameUI extends Component {
         this.setState({
           secret: secret,
           history: history,
+          key: new Date(),
         })
         return;
       }
@@ -198,7 +203,7 @@ class GameUI extends Component {
     }
     console.log(this.state.history);
     return (
-      <div>
+      <div key={this.state.key}>
       {past_guesses}
       <NextGuessRow
        key="next"
