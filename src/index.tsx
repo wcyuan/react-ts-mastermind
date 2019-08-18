@@ -39,7 +39,7 @@ function Row(props) {
   for (let ii = 0; ii < props.result.partial; ii++) {
     items.push(<EvalPeg color="white" key={"partial"+ii} />)
   }
-  return (<div>{items}</div>);
+  return (<div>{items} ({props.num_left})</div>);
 }
 
 class NextGuessRow extends Component {
@@ -134,15 +134,55 @@ class GameUI extends Component {
       auto: new mastermind.AutoPlayer(game),
     };
   }
-  handleNewGuess(guess) {
-    let history = this.state.history.slice();
-    let result = this.state.game.check_guess(
-      guess, this.state.secret);
+  updateHistory(game, auto, secret, guess, history) {
+    let result = game.check_guess(
+      guess, secret);
     history.push([guess, result]);
-    this.setState({history: history});
+    let num_left = auto.get_num_possible_guesses(history);
+    history[history.length-1].push(num_left);
+    return history;
+  }
+  handleNewGuess(guess) {
+    this.setState({
+      history: this.updateHistory(
+        this.state.game,
+        this.state.auto,
+        this.state.secret,
+        guess,
+        this.state.history.slice())});
   }
   getAutoGuess() {
     return this.state.auto.make_guess(this.state.history);
+  }
+  newGame() {
+    this.setState({
+      secret: this.state.game.get_random_guess(),
+      history: [],
+    });
+  }
+  newOneMoveGame() {
+    while(true) {
+      const secret = this.state.game.get_random_guess();
+      const history = [];
+      let num_left = 2;
+      while(num_left > 1) {
+        const guess = this.state.auto.make_guess(history);
+        this.updateHistory(
+          this.state.game,
+          this.state.auto,
+          secret,
+          guess,
+          history);
+        num_left = history[history.length-1][2];
+      }
+      if (history[history.length-1][1].exact !=  this.state.game.width) {
+        this.setState({
+          secret: secret,
+          history: history,
+        })
+        return;
+      }
+    }
   }
   render() {
     const past_guesses = [];
@@ -152,7 +192,8 @@ class GameUI extends Component {
          key={ii}
          game={this.state.game}
          guess={this.state.history[ii][0]}
-         result={this.state.history[ii][1]} />
+         result={this.state.history[ii][1]}
+         num_left={this.state.history[ii][2]} />
       );
     }
     console.log(this.state.history);
@@ -163,8 +204,14 @@ class GameUI extends Component {
        key="next"
        game={this.state.game}
        auto={this.getAutoGuess.bind(this)}
-       onSubmit={this.handleNewGuess.bind(this)}
+       onSubmit={this.handleNewGuess.bind(this)}       
        />
+      <button onClick={() => this.newGame()}>
+       New Game!
+      </button>
+      <button onClick={() => this.newOneMoveGame()}>
+       New One Move Game!
+      </button>
       </div>
     );
   }
@@ -184,20 +231,6 @@ class App extends Component<AppProps, AppState> {
         <GameUI width={4} num_pegs={6} />
       </div>
     );
-    /*
-
-let g = new mastermind.Game();
-let r = g.check_guess(['1', '1', '3', '4'], ['1', '1', '2', '2']);
-console.log(g.zip(['1', '2', '3', '4'], ['1', '1', '2', '2']));
-console.log("" + r.exact + ", " + r.partial);
-g.play(mastermind.MaybeAutoPlayer);
-//console.log(g.get_all_valid_guesses());
-let p = new mastermind.AutoPlayer(g);
-console.log(p.get_possible_guesses(
-  [[['1', '1', '3', '3'], new mastermind.Result(3, 0)]]));
-
-//console.log(p.get_possible_guesses([]));
-    */
   }
 }
 
