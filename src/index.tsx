@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { render } from 'react-dom';
-import Hello from './Hello';
 import './style.css';
 import * as mastermind from "./mastermind";
 
@@ -16,22 +15,35 @@ function Peg(props) {
   return (<button
            className={className}
            onClick={props.onClick}
+           disabled={props.disabled}
            style={style} />);
 }
 
 function EvalPeg(props) {
-  return Peg({color: props.color, size: "small"});
+  return Peg({color: props.color, size: "small", disabled: true});
 }
 
 function GuessPeg(props) {
-  return Peg({color: props.color, onClick: props.onClick, size: "big"});
+  return Peg({
+    color: props.color,
+    onClick: props.onClick,
+    size: "biggest",
+    disabled:  false,
+  });
 }
+
+function HistoryPeg(props) {
+  return Peg({color: props.color, size: "big"});
+}
+
 
 function Row(props) {
   const items = [];
   for (let ii = 0; ii < props.guess.length; ii++) {
     items.push(
-      <GuessPeg key={ii} color={Util.getColor(props.game, props.guess[ii])} />)
+      <HistoryPeg
+       key={ii}
+       color={Util.getColor(props.game, props.guess[ii])} />)
   }
   for (let ii = 0; ii < props.result.exact; ii++) {
     items.push(<EvalPeg color="red" key={"exact"+ii} />)
@@ -80,10 +92,10 @@ class NextGuessRow extends Component {
       <div>
       {items}
       <button onClick={() => this.props.onSubmit(this.state.guess)}>
-       Guess!
+       Guess
       </button>
       <button onClick={() => this.makeAutoGuess()}>
-       Auto!
+       Auto Guess
       </button>
       </div>
       );
@@ -203,19 +215,21 @@ class GameUI extends Component {
     }
     return (
       <div key={this.state.key}>
+      <button onClick={() => this.newGame()}>
+       New Game
+      </button>
+      <button onClick={() => this.newOneMoveGame()}>
+       New One Move Game
+      </button>
+      <hr/>
       {past_guesses}
+      <hr/>
       <NextGuessRow
        key="next"
        game={this.state.game}
        auto={this.getAutoGuess.bind(this)}
        onSubmit={this.handleNewGuess.bind(this)}       
        />
-      <button onClick={() => this.newGame()}>
-       New Game!
-      </button>
-      <button onClick={() => this.newOneMoveGame()}>
-       New One Move Game!
-      </button>
       </div>
     );
   }
@@ -232,6 +246,7 @@ class App extends Component<AppProps, AppState> {
   render() {
     return (
       <div>
+        <h1>Mastermind!</h1>
         <GameUI width={4} num_pegs={6} />
       </div>
     );
