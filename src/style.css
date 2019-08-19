@@ -12,6 +12,11 @@ h1, p {
   margin: 1%;
   }
 
+.biggest {
+  height: 60px;
+  width: 60px;
+}
+
 .big {
   height: 30px;
   width: 30px;
