@@ -60,8 +60,12 @@ class NextGuessRow extends Component {
     this.state = {
       guess: []
     }
-    for (let ii = 0; ii < this.props.game.width; ii++) {
-      this.state.guess.push(this.props.game.valid_values[ii]);
+    if ("guess" in props && props.guess != null) {
+      this.state.guess = props.guess;
+    } else {
+      for (let ii = 0; ii < this.props.game.width; ii++) {
+        this.state.guess.push(this.props.game.valid_values[ii]);
+      }
     }
   }
   handleClick(ii:number) {
@@ -148,6 +152,7 @@ class GameUI extends Component {
       // Set a key to make it easy to reset components
       // https://stackoverflow.com/a/21750576
       key: new Date(),
+      firstguess: null,
     };
   }
   updateHistory(game, auto, secret, guess, history) {
@@ -197,6 +202,7 @@ class GameUI extends Component {
           secret: secret,
           history: history,
           key: new Date(),
+          firstguess: history[history.length-1][0],
         })
         return;
       }
@@ -229,7 +235,8 @@ class GameUI extends Component {
        key="next"
        game={this.state.game}
        auto={this.getAutoGuess.bind(this)}
-       onSubmit={this.handleNewGuess.bind(this)}       
+       onSubmit={this.handleNewGuess.bind(this)}     
+       guess={this.state.firstguess}
        />
       </div>
     );
