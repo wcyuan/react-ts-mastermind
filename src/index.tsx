@@ -145,11 +145,11 @@ class Util {
 function EntryBox(props) {
     return (
       <input
-        type="text"
+        type="number"
         value={props.value}
         onChange={props.onChange}
         onFocus={(event) => event.target.select()}
-        size={2}
+        style={{width:"25px"}}
       />
     );
 }
