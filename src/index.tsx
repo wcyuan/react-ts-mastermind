@@ -143,14 +143,15 @@ class Util {
 }
 
 function EntryBox(props) {
-     return (
-        <input
-         type="text"
-         value={props.value}
-         onChange={props.onChange}
-         size={2}
-       />
-     );
+    return (
+      <input
+        type="text"
+        value={props.value}
+        onChange={props.onChange}
+        onFocus={(event) => event.target.select()}
+        size={2}
+      />
+    );
 }
 
 class GameUI extends Component {
