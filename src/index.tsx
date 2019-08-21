@@ -144,6 +144,7 @@ class GameUI extends Component {
       secret: game.get_random_guess(),
       history: [],
       auto: new mastermind.AutoPlayer(game),
+      random: new mastermind.RandomPlayer(game),
       // Set a key to make it easy to reset components
       // https://stackoverflow.com/a/21750576
       key: new Date(),
@@ -182,7 +183,7 @@ class GameUI extends Component {
       const history = [];
       let num_left = 2;
       while(num_left > 1) {
-        const guess = this.state.auto.make_guess(history);
+        const guess = this.state.random.make_guess(history);
         this.updateHistory(
           this.state.game,
           this.state.auto,
