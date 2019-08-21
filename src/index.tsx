@@ -68,7 +68,7 @@ class NextGuessRow extends Component {
       for (let ii = 0; ii < this.props.game.width; ii++) {
         this.state.guess.push(
           this.props.game.valid_values[
-            ii%this.props.game.valid_values.length]);
+            ii % this.props.game.valid_values.length]);
       }
     }
   }
@@ -156,11 +156,21 @@ function EntryBox(props) {
 class GameUI extends Component {
   constructor(props) {
     super(props);
-    const game = this.makeGame(props.numColors, props.width);
-    this.state = {
-      numColors: props.numColors,
-      width: props.width,
+    this.state = this.getNewState(props.numColors, props.width);
+  }
+  makeGame(numColors, width) {
+    let valid_values = [];
+    for (let ii = 0; ii < numColors; ii++) {
+      valid_values.push("" + ii);
+    }
+    return new mastermind.Game(width, valid_values);    
+  }
+  getNewState(numColors, width) {
+    const game = this.makeGame(numColors, width);
+    return {
       game: game,
+      width: width,
+      numColors: numColors,
       secret: game.get_random_guess(),
       history: [],
       auto: new mastermind.AutoPlayer(game),
@@ -171,33 +181,15 @@ class GameUI extends Component {
       key: new Date(),
     };
   }
-  makeGame(numColors, width) {
-    let valid_values = [];
-    for (let ii = 0; ii < numColors; ii++) {
-      valid_values.push("" + ii);
-    }
-    return new mastermind.Game(width, valid_values);    
-  }
-  resetState(numColors, width) {
-    const game = this.makeGame(numColors, width);
-    this.setState({
-      game: game,
-      width: width,
-      numColors: numColors,
-      secret: game.get_random_guess(),
-      history: [],
-      auto: new mastermind.AutoPlayer(game),
-      random: new mastermind.RandomPlayer(game),
-      firstguess: null,
-      key: new Date(),
-    });
-  }
   setWidth(event) {
-    this.resetState(this.state.numColors, event.target.value);
+    this.setState(
+      this.getNewState(
+        this.state.numColors, event.target.value));
   }
-
   setNumColors(event) {
-    this.resetState(event.target.value, this.state.width);  
+    this.setState(
+      this.getNewState(
+        event.target.value, this.state.width));  
   }
   updateHistory(game, auto, secret, guess, history) {
     let result = game.check_guess(
@@ -285,7 +277,7 @@ class GameUI extends Component {
       {past_guesses}
       <hr/>
       <NextGuessRow
-       key={this.state.key + "_next"}
+       key={"next"}
        game={this.state.game}
        auto={this.getAutoGuess.bind(this)}
        onSubmit={this.handleNewGuess.bind(this)}     
