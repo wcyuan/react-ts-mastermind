@@ -160,14 +160,20 @@ export class Game {
 // -------------------------------------------------------------- //
 
 export class AutoPlayer extends Player {
-  readonly all_guesses: Guess[];
+  readonly _all_guesses: Guess[];
   constructor(game: Game) {
     super(game);
-    this.all_guesses = this.game.get_all_valid_guesses();
+    this._all_guesses = null;
+  }
+  cached_all_guesses() {
+    if (this._all_guesses == null) {
+      this._all_guesses = this.game.get_all_valid_guesses();
+    }
+    return this._all_guesses;
   }
   get_possible_guesses(history: History) {
     let possible_guesses = [];
-    for (let guess of this.all_guesses) {
+    for (let guess of this.cached_all_guesses()) {
       let match = true;
       for (let hist of history) {
         let result = this.game.check_guess(hist[0], guess);
