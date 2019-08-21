@@ -203,6 +203,9 @@ export class AutoPlayer extends Player {
   make_guess(history: History) {
     return this.get_possible_guesses(history)[0];
   }
+  make_random_guess(history: History) {
+    return this.game.random_choice(this.get_possible_guesses(history));
+  }
   get_guess(num_tries=4, history: History) {
     let guess = this.make_guess(history);
     output("Guessed: " + this.game.guess_string(guess));
@@ -214,7 +217,7 @@ export class AutoPlayer extends Player {
 
 export class RandomPlayer extends AutoPlayer {
   make_guess(history: History) {
-    return this.game.random_choice(this.get_possible_guesses(history));
+    return this.make_random_guess(history);
   }
 }
 
