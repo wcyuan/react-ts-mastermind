@@ -196,7 +196,6 @@ class GameUI extends Component {
       guess, secret);
     history.push([guess, result]);
     let num_left = "";
-    console.log(Math.pow(game.valid_values.length, game.width));
     if (force_num_left ||
         auto.is_possible_guesses_computed(history) || 
         Math.pow(game.valid_values.length, game.width) < 1e7) {
