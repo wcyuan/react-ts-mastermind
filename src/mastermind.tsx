@@ -159,55 +159,152 @@ export class Game {
 
 // -------------------------------------------------------------- //
 
-export class AutoPlayer extends Player {
-  readonly _all_guesses: Guess[];
-  constructor(game: Game) {
-    super(game);
-    this._all_guesses = null;
+function* AllValuesIterator(valid_values: Value[], width: number) {
+  if (width <= 0 || valid_values.length <= 0) {
+    return;
   }
-  cached_all_guesses() {
-    if (this._all_guesses == null) {
-      this._all_guesses = this.game.get_all_valid_guesses();
-    }
-    return this._all_guesses;
+  let indexes = [];
+  let values = [];
+  for (let ii = 0; ii < width; ii++) {
+    indexes.push(0);
+    values.push(valid_values[0]);
   }
-  get_possible_guesses(history: History) {
-    let possible_guesses = [];
-    for (let guess of this.cached_all_guesses()) {
-      let match = true;
-      for (let hist of history) {
-        let result = this.game.check_guess(hist[0], guess);
-        /*
-        console.log("guess: " + guess + ", hist: " + hist[0] + ", res: " + result.str() + ", hist[1]:" + hist[1].str());
-        */
-        if (!result.equals(hist[1])) {
-            match = false;
-            break;
+  while(true) {
+    yield values.slice();
+    indexes[0] += 1;
+    for (let place = 0; place < indexes.length; place++) {
+      if (indexes[place] >= valid_values.length) {
+        indexes[place] = 0;
+        if (place + 1 < indexes.length) {
+          indexes[place + 1] += 1;
+        } else {
+          return;
         }
       }
-      if (match) {
-        possible_guesses.push(guess);
+      values[place] = valid_values[indexes[place]];
+    }
+  }
+}
+
+export class AllValuesIteratorCustom {
+  current: number[];
+  _isDone: boolean;
+  readonly valid_values: Value[];
+  constructor(valid_values: Value[], width: number) {
+    this.valid_values = valid_values;
+    this.reset(width);
+  }
+  get() {
+    let retval = [];
+    for (let ii = 0; ii < this.current.length; ii++) {
+      if (this.current[ii] < this.valid_values.length) {
+        retval.push(this.valid_values[this.current[ii]]);
+      } else {
+        retval.push(null);
       }
     }
-    return possible_guesses;
-    /*
-    // https://stackoverflow.com/questions/44808882/create-a-clone-of-an-array-in-typescript
-    let possible_guesses = [...this.all_guesses];
-    return possible_guesses.filter(
-      (value) =>
-        console.log("" + value + this.game.check_guess(history[0][0], value))
-        history.reduce(
-          (acc, guess) =>
-          acc && this.game.check_guess(guess[0], value) == guess[1],
-          true)
-    );
-    */
+    return retval;
+  }
+  reset(width?: number) {
+    if (!width) {
+      width = this.current.length;
+    }
+    this._isDone = !(width > 0 && this.valid_values.length > 0);
+    this.current = [];
+    for (let ii = 0; ii < width; ii++) {
+      this.current.push(0);
+    }
+  }
+  next() {
+    if (this._isDone) {
+      return;
+    }
+    this.current[0] += 1;
+    for (let place = 0; place < this.current.length; place++) {
+      if (this.current[place] >= this.valid_values.length) {
+        this.current[place] = 0;
+        if (place + 1 < this.current.length) {
+          this.current[place + 1] += 1;
+        } else {
+          this._isDone = true;
+        }
+      }
+    }
+  }
+  hasNext() {
+    return !this._isDone;
+  }
+}
+
+function* PossibleValuesIterator(game: Game, history: History) {
+  let itr = AllValuesIterator(game.valid_values, game.width);
+  let next = itr.next();
+  while(!next.done) {
+    let guess = next.value;
+    let match = true;
+    for (let hist of history) {
+      let result = game.check_guess(hist[0], guess);
+      if (!result.equals(hist[1])) {
+          match = false;
+          break;
+      }
+    }
+    if (match) {
+      yield guess;
+    }
+    next = itr.next();
+  }
+  return;
+}
+
+export class AutoPlayer extends Player {
+  _cached_possible_guesses: Guess[];
+  _history_for_cached_possible_guesses: History;
+  constructor(game: Game) {
+    super(game);
+    this._history_for_cached_possible_guesses = null;
+  }
+  history_matches(hist1: History, hist2: History) {
+    if (hist1 == null && hist2 == null) {
+      return true;
+    }
+    if (hist1 == null || hist2 == null) {
+      return false;
+    }
+    if (hist1.length != hist2.length) {
+      return false;
+    }
+    for (let ii = 0; ii < hist1.length; ii++) {
+      if (hist1[ii] != hist2[ii]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  get_possible_guesses(history: History) {
+    if (!this.history_matches(
+      history, this._history_for_cached_possible_guesses)) {
+        this._cached_possible_guesses = [];
+        let itr = PossibleValuesIterator(this.game, history);
+        let next = itr.next();
+        while(!next.done) {
+          this._cached_possible_guesses.push(next.value);
+          next = itr.next();
+        }
+        this._history_for_cached_possible_guesses = history.slice();
+    }
+    return this._cached_possible_guesses;
   }
   get_num_possible_guesses(history: History) {
-    return this.get_possible_guesses(history).length
+    return this.get_possible_guesses(history).length;
   }
   make_guess(history: History) {
-    return this.get_possible_guesses(history)[0];
+    if (this.history_matches(
+      history, this._history_for_cached_possible_guesses)) {
+      return this.get_possible_guesses(history)[0];
+    } else {
+      return PossibleValuesIterator(this.game, history).next().value;
+    }
   }
   make_random_guess(history: History) {
     return this.game.random_choice(this.get_possible_guesses(history));
