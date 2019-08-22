@@ -186,56 +186,6 @@ function* AllValuesIterator(valid_values: Value[], width: number) {
   }
 }
 
-export class AllValuesIteratorCustom {
-  current: number[];
-  _isDone: boolean;
-  readonly valid_values: Value[];
-  constructor(valid_values: Value[], width: number) {
-    this.valid_values = valid_values;
-    this.reset(width);
-  }
-  get() {
-    let retval = [];
-    for (let ii = 0; ii < this.current.length; ii++) {
-      if (this.current[ii] < this.valid_values.length) {
-        retval.push(this.valid_values[this.current[ii]]);
-      } else {
-        retval.push(null);
-      }
-    }
-    return retval;
-  }
-  reset(width?: number) {
-    if (!width) {
-      width = this.current.length;
-    }
-    this._isDone = !(width > 0 && this.valid_values.length > 0);
-    this.current = [];
-    for (let ii = 0; ii < width; ii++) {
-      this.current.push(0);
-    }
-  }
-  next() {
-    if (this._isDone) {
-      return;
-    }
-    this.current[0] += 1;
-    for (let place = 0; place < this.current.length; place++) {
-      if (this.current[place] >= this.valid_values.length) {
-        this.current[place] = 0;
-        if (place + 1 < this.current.length) {
-          this.current[place + 1] += 1;
-        } else {
-          this._isDone = true;
-        }
-      }
-    }
-  }
-  hasNext() {
-    return !this._isDone;
-  }
-}
-
 function* PossibleValuesIterator(game: Game, history: History) {
   let itr = AllValuesIterator(game.valid_values, game.width);
   let next = itr.next();
@@ -281,10 +231,18 @@ export class AutoPlayer extends Player {
     }
     return true;
   }
+  is_possible_guesses_computed(history: History) {
+    return this.history_matches(
+      history, this._history_for_cached_possible_guesses);
+  }
   get_possible_guesses(history: History) {
-    if (!this.history_matches(
-      history, this._history_for_cached_possible_guesses)) {
+    if (!this.is_possible_guesses_computed(history)) {
         this._cached_possible_guesses = [];
+        // TODO: This always recomputes possible values from
+        // scratch, but if the _cached_possible_guesses already
+        // satisfy all the history except the last element,
+        // then we only need to throw out the ones that don't
+        // match the last element of history.
         let itr = PossibleValuesIterator(this.game, history);
         let next = itr.next();
         while(!next.done) {
@@ -299,8 +257,7 @@ export class AutoPlayer extends Player {
     return this.get_possible_guesses(history).length;
   }
   make_guess(history: History) {
-    if (this.history_matches(
-      history, this._history_for_cached_possible_guesses)) {
+    if (this.is_possible_guesses_computed(history)) {
       return this.get_possible_guesses(history)[0];
     } else {
       return PossibleValuesIterator(this.game, history).next().value;
