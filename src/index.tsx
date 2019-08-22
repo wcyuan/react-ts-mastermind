@@ -198,6 +198,7 @@ class GameUI extends Component {
     let num_left = "";
     console.log(Math.pow(game.valid_values.length, game.width));
     if (force_num_left ||
+        auto.is_possible_guesses_computed(history) || 
         Math.pow(game.valid_values.length, game.width) < 1e7) {
       num_left = auto.get_num_possible_guesses(history);
     }
