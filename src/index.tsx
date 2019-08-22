@@ -191,11 +191,16 @@ class GameUI extends Component {
       this.getNewState(
         event.target.value, this.state.width));  
   }
-  updateHistory(game, auto, secret, guess, history) {
+  updateHistory(game, auto, secret, guess, history, force_num_left) {
     let result = game.check_guess(
       guess, secret);
     history.push([guess, result]);
-    let num_left = auto.get_num_possible_guesses(history);
+    let num_left = "";
+    console.log(Math.pow(game.valid_values.length, game.width));
+    if (force_num_left ||
+        Math.pow(game.valid_values.length, game.width) < 1e7) {
+      num_left = auto.get_num_possible_guesses(history);
+    }
     history[history.length-1].push(num_left);
     return history;
   }
@@ -206,7 +211,8 @@ class GameUI extends Component {
         this.state.auto,
         this.state.secret,
         guess,
-        this.state.history.slice())});
+        this.state.history.slice(),
+        false)});
   }
   getAutoGuess() {
     return this.state.auto.make_guess(this.state.history);
@@ -231,7 +237,8 @@ class GameUI extends Component {
           this.state.auto,
           secret,
           guess,
-          history);
+          history,
+          true);
         num_left = history[history.length-1][2];
       }
       if (history[history.length-1][1].exact !=  this.state.game.width) {
